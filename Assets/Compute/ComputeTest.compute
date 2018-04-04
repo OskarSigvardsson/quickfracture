@@ -1,0 +1,35 @@
+﻿#pragma kernel Assign
+
+
+struct Triangle {
+	float3 v0;
+	float3 v1;
+	float3 v2;
+};
+
+uint PointCount;
+uint TrisCount;
+
+StructuredBuffer<float3> Points;
+StructuredBuffer<Triangle> Tris;
+RWStructuredBuffer<uint> Assigned;
+
+[numthreads(1024,1,1)]
+void Assign(uint3 id : SV_DispatchThreadID)
+{
+	uint index = id.x;
+
+	if (index < PointCount) {
+		float3 pnt = Points[index];
+
+		for (uint i = 0; i < TrisCount; i++) {
+			Triangle t = Tris[i];
+
+			float dp = dot(cross(t.v1 - t.v0, t.v2 - t.v0), pnt - t.v0);
+
+			if (dp > 0.0) {
+				Assigned[index] = i;
+			}
+		}
+	}
+}

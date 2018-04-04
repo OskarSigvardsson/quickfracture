@@ -20,7 +20,7 @@ namespace GK {
 			while(true) {
 				points.Clear();
 
-				for (int i = 0; i < 500; i++) {
+				for (int i = 0; i < 50; i++) {
 					points.Add(new Vector3(
 							Random.value,
 							Random.value,
@@ -28,7 +28,7 @@ namespace GK {
 
 				}
 
-				calc.GenerateHull(points, true, ref verts, ref tris, ref normals);
+				calc.GenerateHull(points, ref verts, ref tris, ref normals);
 
 				mesh.Clear();
 				mesh.SetVertices(verts);

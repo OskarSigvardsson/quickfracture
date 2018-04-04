@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace GK {
 	/// <summary>
@@ -242,12 +243,6 @@ namespace GK {
 		List<HorizonEdge> horizon;
 
 		/// <summary>
-		///   If SplitVerts is false, this Dictionary is used to keep
-		///   track of which points we've added to the final mesh.
-		/// </summary>
-		Dictionary<int, int> hullVerts;
-
-		/// <summary>
 		///   The "tail" of the openSet, the last index of a vertex
 		///   that has been assigned to a face.
 		/// </summary>
@@ -260,29 +255,49 @@ namespace GK {
 		int faceCount = 0;
 
 		/// <summary>
+		///   Struct representing an added during ConstructCone().
+		///   These are the faces we need check in ReassignPoints, so
+		///   lets keep track of them
+		/// </summary>
+		struct AddedFace {
+			public int FaceIndex;
+			public Vector3 PointOnFace;
+			public Vector3 Normal;
+		}
+
+		/// <summary>
+		///   List of added faces during ConstructCone().
+		/// </summary>
+		List<AddedFace> addedFaces;
+
+		/// <summary>
 		///   Generate a convex hull from points in points array, and
 		///   store the mesh in Unity-friendly format in verts and
-		///   tris. If splitVerts is true, the the verts will be
-		///   split, if false, the same vert will be used for more
-		///   than one triangle.
+		///   tris.
 		/// </summary>
 		public void GenerateHull(
 			List<Vector3> points,
-			bool splitVerts,
 			ref List<Vector3> verts,
 			ref List<int> tris,
 			ref List<Vector3> normals)
 		{
 
-			Initialize(points, splitVerts);
+			//Profiler.BeginSample("Initialize");
+			Initialize(points);
+			//Profiler.EndSample();
 
+			//Profiler.BeginSample("Generate initial hull");
 			GenerateInitialHull(points);
+			//Profiler.EndSample();
 
 			while (openSetTail >= 0) {
 				GrowHull(points);
 			}
 
-			ExportMesh(points, splitVerts, ref verts, ref tris, ref normals);
+			//Profiler.BeginSample("Export mesh");
+			ExportMesh(points, ref verts, ref tris, ref normals);
+			//Profiler.EndSample();
+
 			VerifyMesh(points, ref verts, ref tris);
 		}
 
@@ -290,7 +305,7 @@ namespace GK {
 		///   Make sure all the buffers and variables needed for the
 		///   algorithm are initialized.
 		/// </summary>
-		void Initialize(List<Vector3> points, bool splitVerts) {
+		void Initialize(List<Vector3> points) {
 			faceCount = 0;
 			openSetTail = -1;
 
@@ -299,6 +314,7 @@ namespace GK {
 				litFaces = new HashSet<int>();
 				horizon = new List<HorizonEdge>();
 				openSet = new List<PointFace>(points.Count);
+				addedFaces = new List<AddedFace>();
 			} else {
 				faces.Clear();
 				litFaces.Clear();
@@ -319,14 +335,6 @@ namespace GK {
 					// instead?
 
 					openSet.Capacity = points.Count;
-				}
-			}
-
-			if (!splitVerts) {
-				if (hullVerts == null) {
-					hullVerts = new Dictionary<int, int>();
-				} else {
-					hullVerts.Clear();
 				}
 			}
 		}
@@ -436,9 +444,9 @@ namespace GK {
 
 					var face = faces[j];
 
-					var dist = PointFaceDistance(points[fp.Point], points[face.Vertex0], face);
+					var dist = PointFaceDistance(points[fp.Point], points[face.Vertex0], face.Normal);
 
-					if (dist > 0) {
+					if (dist > EPSILON) {
 						fp.Face = j;
 						fp.Distance = dist;
 						openSet[i] = fp;
@@ -477,6 +485,8 @@ namespace GK {
 			Assert(openSetTail >= 0);
 			Assert(openSet[0].Face != INSIDE);
 
+
+			//Profiler.BeginSample("Find farthest point");
 			// Find farthest point and first lit face.
 			var farthestPoint = 0;
 			var dist = openSet[0].Distance;
@@ -487,7 +497,9 @@ namespace GK {
 					dist = openSet[i].Distance;
 				}
 			}
+			//Profiler.EndSample();
 
+			//Profiler.BeginSample("Find horizon");
 			// Use lit face to find horizon and the rest of the lit
 			// faces.
 			FindHorizon(
@@ -495,16 +507,21 @@ namespace GK {
 				points[openSet[farthestPoint].Point],
 				openSet[farthestPoint].Face,
 				faces[openSet[farthestPoint].Face]);
+			//Profiler.EndSample();
 
 			VerifyHorizon();
 
+			//Profiler.BeginSample("Construct cone");
 			// Construct new cone from horizon
 			ConstructCone(points, openSet[farthestPoint].Point);
+			//Profiler.EndSample();
 
 			VerifyFaces(points);
 
+			//Profiler.BeginSample("Reassign point");
 			// Reassign points
 			ReassignPoints(points);
+			//Profiler.EndSample();
 		}
 
 		/// <summary>
@@ -533,7 +550,7 @@ namespace GK {
 
 			litFaces.Add(fi);
 
-			Assert(PointFaceDistance(point, points[face.Vertex0], face) > 0.0f);
+			Assert(PointFaceDistance(point, points[face.Vertex0], face.Normal) > 0.0f);
 
 			// For the rest of the recursive search calls, we first
 			// check if the triangle has already been visited and is
@@ -547,7 +564,7 @@ namespace GK {
 				var dist = PointFaceDistance(
 					point,
 					points[oppositeFace.Vertex0],
-					oppositeFace);
+					oppositeFace.Normal);
 
 				if (dist <= 0.0f) {
 					horizon.Add(new HorizonEdge {
@@ -566,7 +583,7 @@ namespace GK {
 				var dist = PointFaceDistance(
 					point,
 					points[oppositeFace.Vertex0],
-					oppositeFace);
+					oppositeFace.Normal);
 
 				if (dist <= 0.0f) {
 					horizon.Add(new HorizonEdge {
@@ -585,7 +602,7 @@ namespace GK {
 				var dist = PointFaceDistance(
 					point,
 					points[oppositeFace.Vertex0],
-					oppositeFace);
+					oppositeFace.Normal);
 
 				if (dist <= 0.0f) {
 					horizon.Add(new HorizonEdge {
@@ -651,7 +668,7 @@ namespace GK {
 				var dist = PointFaceDistance(
 					point,
 					points[oppositeFace.Vertex0],
-					oppositeFace);
+					oppositeFace.Normal);
 
 				if (dist <= 0.0f) {
 					horizon.Add(new HorizonEdge {
@@ -670,7 +687,7 @@ namespace GK {
 				var dist = PointFaceDistance(
 					point,
 					points[oppositeFace.Vertex0],
-					oppositeFace);
+					oppositeFace.Normal);
 
 				if (dist <= 0.0f) {
 					horizon.Add(new HorizonEdge {
@@ -703,7 +720,9 @@ namespace GK {
 				faces.Remove(fi);
 			}
 
-			var firstNewFace = faceCount;
+			var firstAddedFace = faceCount;
+
+			addedFaces.Clear();
 
 			for (int i = 0; i < horizon.Count; i++) {
 				// Vertices of the new face, the farthest point as
@@ -717,15 +736,23 @@ namespace GK {
 				// the other side of the horizon, then the next/prev
 				// faces on the new cone
 				var o0 = horizon[i].Face;
-				var o1 = (i == horizon.Count - 1) ? firstNewFace : firstNewFace + i + 1;
-				var o2 = (i == 0) ? (firstNewFace + horizon.Count - 1) : firstNewFace + i - 1;
+				var o1 = (i == horizon.Count - 1) ? firstAddedFace : firstAddedFace + i + 1;
+				var o2 = (i == 0) ? (firstAddedFace + horizon.Count - 1) : firstAddedFace + i - 1;
 
 				var fi = faceCount++;
 
-				faces[fi] = new Face(
+				var newFace = new Face(
 					v0, v1, v2,
 					o0, o1, o2,
 					Normal(points[v0], points[v1], points[v2]));
+
+				addedFaces.Add(new AddedFace {
+						FaceIndex = fi,
+						PointOnFace = points[v0],
+						Normal = newFace.Normal,
+					});
+
+				faces[fi] = newFace;
 
 				var horizonFace = faces[horizon[i].Face];
 
@@ -774,19 +801,18 @@ namespace GK {
 					var assigned = false;
 					var point = points[fp.Point];
 
-					foreach (var kvp in faces) {
-						var fi = kvp.Key;
-						var face = kvp.Value;
+					for (int j = 0; j < addedFaces.Count; j++) {
+						var addedFace = addedFaces[j];
 
 						var dist = PointFaceDistance(
 							point,
-							points[face.Vertex0],
-							face);
+							addedFace.PointOnFace,
+							addedFace.Normal);
 
 						if (dist > EPSILON) {
 							assigned = true;
 
-							fp.Face = fi;
+							fp.Face = addedFace.FaceIndex;
 							fp.Distance = dist;
 
 							openSet[i] = fp;
@@ -824,7 +850,6 @@ namespace GK {
 		/// </summary>
 		void ExportMesh(
 			List<Vector3> points,
-			bool splitVerts,
 			ref List<Vector3> verts,
 			ref List<int> tris,
 			ref List<Vector3> normals)
@@ -850,33 +875,13 @@ namespace GK {
 			foreach (var face in faces.Values) {
 				int vi0, vi1, vi2;
 
-				if (splitVerts) {
-					vi0 = verts.Count; verts.Add(points[face.Vertex0]);
-					vi1 = verts.Count; verts.Add(points[face.Vertex1]);
-					vi2 = verts.Count; verts.Add(points[face.Vertex2]);
+				vi0 = verts.Count; verts.Add(points[face.Vertex0]);
+				vi1 = verts.Count; verts.Add(points[face.Vertex1]);
+				vi2 = verts.Count; verts.Add(points[face.Vertex2]);
 
-					normals.Add(face.Normal);
-					normals.Add(face.Normal);
-					normals.Add(face.Normal);
-				} else {
-					if (!hullVerts.TryGetValue(face.Vertex0, out vi0)) {
-						vi0 = verts.Count;
-						hullVerts[face.Vertex0] = vi0;
-						verts.Add(points[face.Vertex0]);
-					}
-
-					if (!hullVerts.TryGetValue(face.Vertex1, out vi1)) {
-						vi1 = verts.Count;
-						hullVerts[face.Vertex1] = vi1;
-						verts.Add(points[face.Vertex1]);
-					}
-
-					if (!hullVerts.TryGetValue(face.Vertex2, out vi2)) {
-						vi2 = verts.Count;
-						hullVerts[face.Vertex2] = vi2;
-						verts.Add(points[face.Vertex2]);
-					}
-				}
+				normals.Add(face.Normal);
+				normals.Add(face.Normal);
+				normals.Add(face.Normal);
 
 				tris.Add(vi0);
 				tris.Add(vi1);
@@ -889,8 +894,8 @@ namespace GK {
 		///   means that the point is above the face)
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		float PointFaceDistance(Vector3 point, Vector3 pointOnFace, Face face) {
-			return Dot(face.Normal, point - pointOnFace);
+		float PointFaceDistance(Vector3 point, Vector3 pointOnFace, Vector3 normal) {
+			return Dot(normal, point - pointOnFace);
 		}
 
 		/// <summary>
@@ -941,7 +946,7 @@ namespace GK {
 					Assert(PointFaceDistance(
 							points[openSet[i].Point],
 							points[faces[openSet[i].Face].Vertex0],
-							faces[openSet[i].Face]) > 0.0f);
+							faces[openSet[i].Face].Normal) > 0.0f);
 				}
 			}
 		}

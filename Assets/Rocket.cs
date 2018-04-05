@@ -37,7 +37,9 @@ namespace GK {
 				var local = fracture.transform.InverseTransformPoint(world);
 
 				Profiler.BeginSample("Do fracture call");
+
 				fracture.DoFracture(local);
+
 				Profiler.EndSample();
 
 				StartCoroutine(Stupid(world));

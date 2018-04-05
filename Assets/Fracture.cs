@@ -14,7 +14,7 @@ namespace GK {
 		public int ClusterCount = 20;
 
 		[System.NonSerialized]
-		List<Vector3> Points;
+		List<Vector3> points;
 
 
 		static ObjectPool<ConvexHullCalculator> calculators =
@@ -47,21 +47,23 @@ namespace GK {
 
 		void Start() {
 			if (InitialMesh) {
-				Points = new List<Vector3>(PointCount);
+				points = new List<Vector3>(PointCount);
 
-				var mf = GetComponent<MeshFilter>();
+				//var mf = GetComponent<MeshFilter>();
 
-				Points.AddRange(mf.sharedMesh.vertices);
+				// points.AddRange(mf.sharedMesh.vertices);
 
-				while (Points.Count < PointCount) {
+				while (points.Count < PointCount) {
 					var point = new Vector3(
 						Random.value - 0.5f,
 						Random.value - 0.5f,
 						Random.value - 0.5f);
 
-					if (point.sqrMagnitude <= 0.2025f) {
-						Points.Add(point);
-					}
+					// if (point.sqrMagnitude <= 0.2025f) {
+					// 	points.Add(point);
+					// }
+
+					points.Add(point);
 				}
 
 				// StartGeneratingMesh();
@@ -69,7 +71,8 @@ namespace GK {
 		}
 
 		void StartGeneratingMesh() {
-			if (Points.Count < 4) {
+			if (points.Count < 4) {
+				Debug.LogError("I should handle this case somehow :)");
 				// TODO error something
 			} else {
 				mesh = new Mesh();
@@ -87,7 +90,7 @@ namespace GK {
 					tris.Clear();
 					normals.Clear();
 
-					calc.GenerateHull(Points, ref verts, ref tris, ref normals);
+					calc.GenerateHull(points, ref verts, ref tris, ref normals);
 					calculators.PutBack(calc);
 
 					this.verts = verts;
@@ -151,11 +154,11 @@ namespace GK {
 		}
 
 		// void LateUpdate() {
-		// 	if (Points == null || Points.Count == 0) {
-		// 		Points = new List<Vector3>(PointCount);
+		// 	if (points == null || points.Count == 0) {
+		// 		points = new List<Vector3>(PointCount);
 
 		// 		for (int i = 0; i < PointCount; i++) {
-		// 			Points.Add(new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f));
+		// 			points.Add(new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f));
 		// 		}
 		// 	}
 
@@ -167,20 +170,20 @@ namespace GK {
 		// }
 
 		// void GenerateMesh() {
-		// 	if (Points == null) {
-		// 		Points = new List<Vector3>(PointCount);
+		// 	if (points == null) {
+		// 		points = new List<Vector3>(PointCount);
 
 		// 		for (int i = 0; i < PointCount; i++) {
-		// 			Points.Add(new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f));
+		// 			points.Add(new Vector3(Random.value - 0.5f, Random.value - 0.5f, Random.value - 0.5f));
 		// 		}
 		// 	}
 
-		// 	if (Points.Count >= 4) {
+		// 	if (points.Count >= 4) {
 		// 		verts.Clear();
 		// 		tris.Clear();
 		// 		normals.Clear();
 
-		// 		calc.GenerateHull(Points, ref verts, ref tris, ref normals);
+		// 		calc.GenerateHull(points, ref verts, ref tris, ref normals);
 		// 		SetMass();
 
 		// 		var mesh = new Mesh();
@@ -234,48 +237,53 @@ namespace GK {
 		public void DoFracture(Vector3 center) {
 			CallAtFixedUpdate(() => { gameObject.SetActive(false); });
 
-			if (Points.Count >= ClusterCount) {
+			if (points.Count >= ClusterCount) {
+				var velocity = GetComponent<Rigidbody>().velocity;
+
 				var maxRadius = 0.5f;
 
 				var clusters = new List<Vector3>(ClusterCount);
-				var assignedClusters = new int[Points.Count];
+				var assignedClusters = new int[points.Count];
 
-				Profiler.BeginSample("Creating clusters");
 				while (clusters.Count < ClusterCount) {
 					var dir = Random.onUnitSphere;
 					var radius = Random.value * maxRadius;
 
 					radius *= radius;
-					radius *= radius;
+					// radius *= radius;
 
 					var point = center + radius * dir;
 
-					var inside = (point - center).sqrMagnitude
-						< maxRadius * maxRadius;
+					// var point = new Vector3(
+					// 	Random.value - 0.5f,
+					// 	Random.value - 0.5f,
+					// 	Random.value - 0.5f);
 
-					// var inside =
-					// 	   point.x >= -0.5f
-					// 	&& point.x <= 0.5f
-					// 	&& point.y >= -0.5f
-					// 	&& point.y <= 0.5f
-					// 	&& point.z >= -0.5f
-					// 	&& point.z <= 0.5f;
+					// var inside = (point - center).sqrMagnitude
+					// 	< maxRadius * maxRadius;
+
+					var inside =
+						   point.x >= -0.5f
+						&& point.x <= 0.5f
+						&& point.y >= -0.5f
+						&& point.y <= 0.5f
+						&& point.z >= -0.5f
+						&& point.z <= 0.5f;
 
 
 					if (inside) {
 						clusters.Add(point);
 					}
 				}
-				Profiler.EndSample();
 
-				Profiler.BeginSample("Assigning clusters");
+				var clouds = new List<Vector3>[ClusterCount];
 
-				Parallel.For(0, Points.Count, i => {
+				Parallel.For(0, points.Count, i => {
 					var closestCluster = -1;
 					var closestClusterDistanceSqr = float.PositiveInfinity;
 
 					for (int j = 0; j < ClusterCount; j++) {
-						var distSqr = (Points[i] - clusters[j]).sqrMagnitude;
+						var distSqr = (points[i] - clusters[j]).sqrMagnitude;
 
 						if (distSqr < closestClusterDistanceSqr) {
 							closestCluster = j;
@@ -286,39 +294,49 @@ namespace GK {
 					assignedClusters[i] = closestCluster;
 				});
 
-				Profiler.EndSample();
+				Parallel.For(0, ClusterCount, i => {
+					var cloud = new List<Vector3>();
 
-				var cloud = new List<Vector3>();
-
-				Profiler.BeginSample("Creating children");
-				for (int i = 0; i < ClusterCount; i++) {
-					cloud.Clear();
-
-					Profiler.BeginSample("Creating children");
-					for (int j = 0; j < Points.Count; j++) {
+					for (int j = 0; j < points.Count; j++) {
 						if (assignedClusters[j] == i) {
-							cloud.Add(Points[j]);
+							cloud.Add(points[j]);
 						}
 					}
-					Profiler.EndSample();
 
 					if (cloud.Count >= 4) {
-						var child = Instantiate(Prefab, null);
+						clouds[i] = cloud;
+					}
+				});
 
-						child.transform.localPosition = transform.localPosition;
-						child.transform.localRotation = transform.localRotation;
-						child.transform.localScale = transform.localScale;
+				var children = new Fracture[ClusterCount];
 
-						var frac = child.GetComponent<Fracture>();
+				for (int i = 0; i < ClusterCount; i++) {
+					var child = Instantiate(Prefab, null);
 
-						frac.Prefab = Prefab;
-						frac.ClusterCount = ClusterCount;
-						frac.Points = new List<Vector3>(cloud);
-						frac.InitialMesh = false;
-						frac.StartGeneratingMesh();
+					child.transform.localPosition = transform.localPosition;
+					child.transform.localRotation = transform.localRotation;
+					child.transform.localScale = transform.localScale;
+
+					var frac = child.GetComponent<Fracture>();
+
+					frac.Prefab = Prefab;
+					frac.ClusterCount = ClusterCount;
+					frac.InitialMesh = false;
+
+					children[i] = frac;
+				}
+
+				for (int i = 0; i < ClusterCount; i++) {
+					if (clouds[i] == null) {
+						children[i].gameObject.SetActive(false);
+						Destroy(children[i].gameObject);
+					} else {
+						children[i].points = clouds[i];
+						children[i].StartGeneratingMesh();
+						children[i].GetComponent<Rigidbody>().velocity = velocity;
 					}
 				}
-				Profiler.EndSample();
+
 			}
 		}
 	}

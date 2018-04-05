@@ -1,0 +1,9 @@
+Todo list for the stream
+
+* Todo
+** DONE make the thing a cube again
+** DONE optimizations!
+** TODO cool-ass particle effects
+** DONE inheriting velocity from parent shards
+** TODO ARBITRARY CONVEX MESHES!!!
+** TODO ARBITRARY CONCAVE MESHES!!!

@@ -1,0 +1,18 @@
+
+* Cool 3d destruction effect in Unity!
+My name is Oskar Sigvardsson, and I'm making a cool 3d destruction
+effect in Unity. I'm streaming the development over at [[https://www.twitch.tv/chessbiscuit][Twitch]]! Come
+hang out in the chat, or just watch the archives.
+
+I wasn't planning on releasing this effect publicly in a repository
+this early, but I figure the people on the stream might want to check
+it out, so here it is. Keep in mind, this repository is in a VERY
+ROUGH shape, not really intended for public consumption. There's all
+sorts of nonsense hee, like random meshes, unfinished pieces of code
+and unused scenes. The only thing in any kind of shape is the "test"
+scene, so open that if you want to check it out. For more details,
+check the streams!
+
+Oh, and yeah, here's demo: 
+
+[[https://thumbs.gfycat.com/DimWeightyBasilisk-size_restricted.gif]]

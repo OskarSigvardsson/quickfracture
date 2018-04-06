@@ -1,9 +1,42 @@
+#+TODO: TODO DOING | DONE CANCELLED
+
 Todo list for the stream
 
 * Todo
-** DONE make the thing a cube again
-** DONE optimizations!
-** TODO cool-ass particle effects
-** DONE inheriting velocity from parent shards
-** TODO ARBITRARY CONVEX MESHES!!!
-** TODO ARBITRARY CONCAVE MESHES!!!
+** DONE make the thing a cube again <2018-04-05 Thu>
+** DONE optimizations! <2018-04-05 Thu>
+** DONE inheriting velocity from parent shards <2018-04-05 Thu>
+
+** TODO fix up repo [0/3]
+- [ ] write a README
+- [ ] add the logo
+- [ ] clean everything up
+
+** TODO make new awesome gifs for reddit
+For advertising the stream later, i should have some cool gifs that i
+can post places.
+
+Suggestions fom the char are very welcome!
+
+** TODO fix horrifying bug from yesterday
+I.e.: make it so that it's possible to use surface vertices from
+source mesh in the point cloud, and merge any duplicate vertices as
+necessary.
+
+** TODO arbitrary meshes [0/2]
+*** TODO arbitrary convex meshes [0/3]
+- [ ] create inside-mesh test
+- [ ] generate points inside of mesh
+- [ ] generate clusters inside of mesh
+
+*** TODO arbitrary concave meshes [0/3]
+- [ ] figure out how to do it
+- [ ] actually do it
+
+** TODO make the explosion asynchronous
+
+** TODO cool-ass particle effects [0/2]
+Pull requests are welcome
+
+- [ ] smoke from inside the fracture
+- [ ] explosion on surface

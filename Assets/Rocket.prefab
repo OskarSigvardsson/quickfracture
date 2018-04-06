@@ -114,7 +114,7 @@ MonoBehaviour:
   ExplosionRadius: 1
   ExplosionForce: 100
   Speed: 60
-  Lifetime: 0.5
+  Lifetime: 5
 --- !u!135 &135882634891140542
 SphereCollider:
   m_ObjectHideFlags: 1

@@ -6,9 +6,16 @@ Todo list for the stream
 ** DONE make the thing a cube again <2018-04-05 Thu>
 ** DONE optimizations! <2018-04-05 Thu>
 ** DONE inheriting velocity from parent shards <2018-04-05 Thu>
+** DONE fix horrifying bug from yesterday <2018-04-06 Fri>
+I.e.: make it so that it's possible to use surface vertices from
+source mesh in the point cloud, and merge any duplicate vertices as
+necessary.
 
-** TODO fix up repo [0/3]
-- [ ] write a README
+** DONE fix the blinking <2018-04-06 Fri>
+
+
+** TODO fix up repo [1/3]
+- [X] write a README
 - [ ] add the logo
 - [ ] clean everything up
 
@@ -18,16 +25,11 @@ can post places.
 
 Suggestions fom the char are very welcome!
 
-** TODO fix horrifying bug from yesterday
-I.e.: make it so that it's possible to use surface vertices from
-source mesh in the point cloud, and merge any duplicate vertices as
-necessary.
-
-** TODO arbitrary meshes [0/2]
-*** TODO arbitrary convex meshes [0/3]
-- [ ] create inside-mesh test
-- [ ] generate points inside of mesh
-- [ ] generate clusters inside of mesh
+** TODO arbitrary meshes [1/2]
+*** DONE arbitrary convex meshes [3/3] <2018-04-06 Fri>
+- [X] create inside-mesh test
+- [X] generate points inside of mesh
+- [X] generate clusters inside of mesh
 
 *** TODO arbitrary concave meshes [0/3]
 - [ ] figure out how to do it

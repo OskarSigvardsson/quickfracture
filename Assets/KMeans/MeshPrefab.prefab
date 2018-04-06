@@ -125,7 +125,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f07075ae89bd46efabbf3830ce846ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FractureNow: 0
+  InitialMesh: 1
   Prefab: {fileID: 0}
   PointCount: 100000
   ClusterCount: 20

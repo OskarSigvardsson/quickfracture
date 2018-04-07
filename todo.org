@@ -31,9 +31,10 @@ Suggestions fom the char are very welcome!
 - [X] generate points inside of mesh
 - [X] generate clusters inside of mesh
 
-*** TODO arbitrary concave meshes [0/3]
-- [ ] figure out how to do it
-- [ ] actually do it
+*** DOING arbitrary concave meshes [0/3]
+- [ ] make ray-triangle intersection test
+- [ ] make inside concave mesh test
+- [ ] destroy a concave mesh, with uniform distribution of clusters
 
 ** TODO make the explosion asynchronous
 

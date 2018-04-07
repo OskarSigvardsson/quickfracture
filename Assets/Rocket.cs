@@ -38,7 +38,8 @@ namespace GK {
 
 				Profiler.BeginSample("Do fracture call");
 
-				fracture.DoFracture(local);
+				//fracture.DoFracture(local);
+				fracture.DoFracture();
 
 				Profiler.EndSample();
 

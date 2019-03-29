@@ -1,3 +1,10 @@
+*UPDATE*
+
+I streamed the development of this effect on Twitch, but unfortunately those archives are long gone down the memory hole. Also unfortunately, I never properly finished this. Life and other projects came in the way. That means that this repo is very much in a half-finished state, and the effect itself (while very cool!) is not in any kind of production ready state. I'll leave the repo up, and it's licensed using MIT, so anyone who want to incorporate this into their game is free to go right ahead, but beware: you'll have to do some amount of work on your own to if you want it to run in a real game. 
+
+Original README follows: 
+
+-------------------------
 
 * Cool 3d destruction effect in Unity!
 My name is Oskar Sigvardsson, and I'm making a cool 3d destruction
